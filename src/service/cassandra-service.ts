@@ -11,7 +11,7 @@ import { cassandraClient } from './cassandra-client';
 export async function fetchTableSchemas(
   keyspace: string,
   tableNames?: string[]
-): Promise<[Error | null, TableDefinition[]]> {
+): Promise<TableDefinition[]> {
   const query = tableNames?.length
     ? `SELECT table_name, column_name, clustering_order, kind, position, type 
        FROM system_schema.columns 
@@ -26,7 +26,10 @@ export async function fetchTableSchemas(
   const [error, result] = await safeCall(() =>
     cassandraClient.execute(query, params, { prepare: true })
   );
-  if (error) return [error, []];
+  if (error) {
+    console.error('Failed to fetch table schemas:', error.message);
+    process.exit(1);
+  }
 
   // Group rows by table name since the query returns all columns for all tables requested
   const tableMap = new Map<string, SchemaRow[]>();
@@ -50,35 +53,5 @@ export async function fetchTableSchemas(
     columns,
   }));
 
-  return [null, tables];
-}
-
-export async function getTableNames({
-  keyspace,
-}: { keyspace?: string } | undefined = {}) {
-  const keyspaceToFetch = keyspace ?? process.env.SCYLLA_DEFAULT_KEYSPACE;
-
-  if (!keyspaceToFetch) {
-    console.log(
-      'No keyspace provided. Please provide a keyspace or set SCYLLA_DEFAULT_KEYSPACE environment variable'
-    );
-    process.exit(1);
-  }
-
-  const [error, tableNames] = await safeCall(() =>
-    cassandraClient.execute(
-      `SELECT table_name, column_name, kind, position, type FROM system_schema.columns WHERE keyspace_name = 'messaging_service';`,
-      {},
-      {
-        prepare: true,
-      }
-    )
-  );
-
-  if (error) {
-    console.error('Failed to fetch table names:', error.message);
-    process.exit(1);
-  }
-
-  return tableNames;
+  return tables;
 }
