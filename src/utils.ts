@@ -37,3 +37,32 @@ export async function safeCall<TArgs extends unknown[], TResult>(
     .then((res) => [null, res] as [null, TResult])
     .catch((e) => [e instanceof Error ? e : new Error(String(e))] as [Error]);
 }
+
+export const MAPPER = {
+  ascii: 'string',
+  bigint: 'number',
+  blob: 'Buffer',
+  boolean: 'boolean',
+  counter: 'number',
+  date: 'string',
+  decimal: 'number',
+  double: 'number',
+  duration: 'string',
+  float: 'number',
+  inet: 'string',
+  int: 'number',
+  list: 'array',
+  map: 'object',
+  set: 'set',
+  smallint: 'number',
+  text: 'string',
+  time: 'string',
+  timestamp: 'Date',
+  timeuuid: 'string',
+  tinyint: 'number',
+  tuple: 'tuple',
+  uuid: 'string',
+  varchar: 'string',
+  varint: 'number',
+  vector: 'vector',
+};
