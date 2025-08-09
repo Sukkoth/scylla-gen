@@ -52,3 +52,33 @@ export async function fetchTableSchemas(
 
   return [null, tables];
 }
+
+export async function getTableNames({
+  keyspace,
+}: { keyspace?: string } | undefined = {}) {
+  const keyspaceToFetch = keyspace ?? process.env.SCYLLA_DEFAULT_KEYSPACE;
+
+  if (!keyspaceToFetch) {
+    console.log(
+      'No keyspace provided. Please provide a keyspace or set SCYLLA_DEFAULT_KEYSPACE environment variable'
+    );
+    process.exit(1);
+  }
+
+  const [error, tableNames] = await safeCall(() =>
+    cassandraClient.execute(
+      `SELECT table_name, column_name, kind, position, type FROM system_schema.columns WHERE keyspace_name = 'messaging_service';`,
+      {},
+      {
+        prepare: true,
+      }
+    )
+  );
+
+  if (error) {
+    console.error('Failed to fetch table names:', error.message);
+    process.exit(1);
+  }
+
+  return tableNames;
+}
