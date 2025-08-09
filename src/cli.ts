@@ -17,9 +17,9 @@ program
     '-f, --format',
     'Format models after generation using local prettier in your project'
   )
-  .option('-m, --models <names...>', 'Model names (space or comma separated)')
+  .option('-t, --tables <names...>', 'Table names (space or comma separated)')
   .action(async (options) => {
-    const normalizedModels = Array.from(
+    const tables: string[] = Array.from(
       new Set(
         (options.models || [])
           .flatMap((m: string) => m.split(','))
@@ -28,7 +28,9 @@ program
       )
     );
 
-    await generateTypesAndMappers();
+    await generateTypesAndMappers({
+      tables,
+    });
 
     if (options.format) {
       await formatModels();

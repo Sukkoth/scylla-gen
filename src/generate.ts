@@ -10,8 +10,12 @@ import {
 } from './utils';
 import { fetchTableSchemas } from './service/cassandra-service';
 
-export async function generateTypesAndMappers() {
-  const tableSchemas = await fetchTableSchemas('messaging_service');
+export async function generateTypesAndMappers({
+  tables,
+}: {
+  tables: string[];
+}) {
+  const tableSchemas = await fetchTableSchemas('messaging_service', tables);
 
   const modelsDir = path.resolve(process.cwd(), 'src/cassandra-models');
   await fs.mkdir(modelsDir, { recursive: true });
