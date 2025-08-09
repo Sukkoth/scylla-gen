@@ -1,0 +1,25 @@
+{
+  "name": "scylla-gen",
+  "version": "1.0.0",
+  "main": "dist/cli.js",
+  "bin": {
+    "scylla-gen": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "pluralize": "^8.0.0"
+  },
+  "peerDependencies": {
+    "cassandra-driver": "^4.6.3",
+    "dotenv": "^17.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.10",
+    "@types/pluralize": "^0.0.33",
+    "typescript": "^5.0.0"
+  }
+}
