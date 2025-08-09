@@ -69,11 +69,7 @@ export async function inspectModels(
     process.exit(1);
   }
 
-  const [error, tableDefinitions] = await fetchTableSchemas(keyspace, tables);
-  if (error) {
-    console.error('Failed to fetch schema:', error.message);
-    process.exit(1);
-  }
+  const tableDefinitions = await fetchTableSchemas(keyspace, tables);
 
   if (!tableDefinitions.length) {
     console.error(`No tables found in keyspace ${keyspace}`);
