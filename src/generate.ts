@@ -12,8 +12,10 @@ import { fetchTableSchemas } from './service/cassandra-service';
 
 export async function generateTypesAndMappers({
   tables,
+  printOnly,
 }: {
   tables: string[];
+  printOnly?: boolean;
 }) {
   const tableSchemas = await fetchTableSchemas('messaging_service', tables);
 
@@ -32,9 +34,9 @@ export async function generateTypesAndMappers({
 
     const partitionKeyLines = partitionKeys.map((c) => {
       if (c.column_name === 'bucket_id') {
-        return `  ${snakeToCamel(
-          c.column_name
-        )}: \`\${number}-\${number}-\${number}-\${number}\`;`;
+        return `  ${snakeToCamel(c.column_name)}: ${
+          MAPPER[c.type as keyof typeof MAPPER]
+        };`;
       }
       return `  ${snakeToCamel(c.column_name)}: ${
         MAPPER[c.type as keyof typeof MAPPER]
@@ -117,8 +119,12 @@ export async function generateTypesAndMappers({
     content += `const ${interfaceName} = mapper.forModel('${interfaceName}') as ${interfaceName}Mapper;\n`;
     content += `export default ${interfaceName};\n`;
 
-    const filePath = path.join(modelsDir, fileName);
-    await fs.writeFile(filePath, content, 'utf-8');
-    console.log(`Written ${fileName}`);
+    if (printOnly) {
+      console.log(content);
+    } else {
+      const filePath = path.join(modelsDir, fileName);
+      await fs.writeFile(filePath, content, 'utf-8');
+      console.log(`Written ${fileName}`);
+    }
   }
 }

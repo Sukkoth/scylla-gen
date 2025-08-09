@@ -17,11 +17,15 @@ program
     '-f, --format',
     'Format models after generation using local prettier in your project'
   )
+  .option(
+    '-p, --print-only',
+    'Print models to console instead of writing to file'
+  )
   .option('-t, --tables <names...>', 'Table names (space or comma separated)')
   .action(async (options) => {
     const tables: string[] = Array.from(
       new Set(
-        (options.models || [])
+        (options.tables || [])
           .flatMap((m: string) => m.split(','))
           .map((m: string) => m.trim())
           .filter(Boolean)
@@ -30,6 +34,7 @@ program
 
     await generateTypesAndMappers({
       tables,
+      printOnly: options.printOnly,
     });
 
     if (options.format) {
