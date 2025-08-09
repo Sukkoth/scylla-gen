@@ -14,9 +14,14 @@ import { highlightSyntax } from './highlight-syntax';
 type Props = {
   tables: string[];
   printOnly?: boolean;
+  keyspace?: string;
 };
-export async function generateTypesAndMappers({ tables, printOnly }: Props) {
-  const tableSchemas = await fetchTableSchemas('messaging_service', tables);
+export async function generateTypesAndMappers({
+  tables,
+  printOnly,
+  keyspace,
+}: Props) {
+  const tableSchemas = await fetchTableSchemas(keyspace, tables);
 
   const modelsDir = path.resolve(process.cwd(), 'src/cassandra-models');
   await fs.mkdir(modelsDir, { recursive: true });

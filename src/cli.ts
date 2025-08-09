@@ -22,6 +22,11 @@ program
     'Print models to console instead of writing to file'
   )
   .option('-t, --tables <names...>', 'Table names (space or comma separated)')
+  .option(
+    '-k, --keyspace <keyspace>',
+    'Select which keyspace to fetch the tables from (default from env will be used if not provided)',
+    process.env.SCYLLA_DEFAULT_KEYSPACE
+  )
   .action(async (options) => {
     const tables: string[] = Array.from(
       new Set(
@@ -35,6 +40,7 @@ program
     await generateTypesAndMappers({
       tables,
       printOnly: options.printOnly,
+      keyspace: options.keyspace,
     });
 
     if (options.format) {

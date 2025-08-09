@@ -9,9 +9,18 @@ import { cassandraClient } from './cassandra-client';
  * @returns array of table definitions
  */
 export async function fetchTableSchemas(
-  keyspace: string,
+  keyspaceToFetch?: string,
   tableNames?: string[]
 ): Promise<TableDefinition[]> {
+  const keyspace = keyspaceToFetch ?? process.env.SCYLLA_DEFAULT_KEYSPACE;
+
+  if (!keyspace) {
+    console.error(
+      'No keyspace provided. Please provide a keyspace or set SCYLLA_DEFAULT_KEYSPACE environment variable'
+    );
+    process.exit(1);
+  }
+
   const query = tableNames?.length
     ? `SELECT table_name, column_name, clustering_order, kind, position, type 
        FROM system_schema.columns 
@@ -28,6 +37,11 @@ export async function fetchTableSchemas(
   );
   if (error) {
     console.error('Failed to fetch table schemas:', error.message);
+    process.exit(1);
+  }
+
+  if (result.rowLength === 0) {
+    console.error(`No tables found in keyspace ${keyspace}`);
     process.exit(1);
   }
 
