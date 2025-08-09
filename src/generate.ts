@@ -1,4 +1,4 @@
-import { cassandraClient } from './cassandra-driver';
+import { cassandraClient } from './cassandra-models/cassandra-client';
 import { types as cassandraTypes } from 'cassandra-driver';
 import pluralize from 'pluralize';
 import fs from 'fs/promises';
@@ -122,7 +122,7 @@ export async function generateTypesAndMappers() {
     let content = '';
 
     content += `import cassandra from 'cassandra-driver';\n`;
-    content += `import { cassandraClient } from '@libs/cassandra-client';\n\n`;
+    content += `import { cassandraClient } from './cassandra-client';\n\n`;
 
     content += `export interface ${interfaceName} {\n`;
     for (const column of table.columns) {

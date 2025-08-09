@@ -41,9 +41,10 @@ program
 program
   .command('inspect')
   .argument('<table_names...>', 'Table name(s), single or multiple')
+  .option('-k, --keyspace <keyspace>', 'Keyspace name')
   .description('Inspect Cassandra models for one or more tables')
-  .action(async (tableNames: string[]) => {
-    await inspectModels(tableNames);
+  .action(async (tableNames: string[], options) => {
+    await inspectModels(tableNames, options.keyspace);
     process.exit(0);
   });
 
