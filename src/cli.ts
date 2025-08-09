@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { generateTypesAndMappers } from './generate';
 import { formatModels } from './format';
+import { inspectModels } from './inspect';
 
 const program = new Command();
 
@@ -34,6 +35,15 @@ program
     if (options.format) {
       await formatModels();
     }
+    process.exit(0);
+  });
+
+program
+  .command('inspect')
+  .argument('<table_names...>', 'Table name(s), single or multiple')
+  .description('Inspect Cassandra models for one or more tables')
+  .action(async (tableNames: string[]) => {
+    await inspectModels(tableNames);
     process.exit(0);
   });
 
