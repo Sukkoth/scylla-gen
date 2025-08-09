@@ -17,3 +17,23 @@ export function getToModel(type: string) {
   if (type === 'timestamp') return '(val) => new Date(val)';
   return '(val) => val';
 }
+
+export function safeCallSync<TArgs extends unknown[], TResult>(
+  fn: (...args: TArgs) => TResult,
+  ...args: TArgs
+): [null, TResult] | [Error] {
+  try {
+    return [null, fn(...args)];
+  } catch (e) {
+    return [e instanceof Error ? e : new Error(String(e))] as [Error];
+  }
+}
+
+export async function safeCall<TArgs extends unknown[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+  ...args: TArgs
+): Promise<[null, TResult] | [Error]> {
+  return fn(...args)
+    .then((res) => [null, res] as [null, TResult])
+    .catch((e) => [e instanceof Error ? e : new Error(String(e))] as [Error]);
+}
