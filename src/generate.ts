@@ -5,47 +5,15 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { snakeToCamel, snakeToPascal, kebabCase, getToModel } from './utils';
+import { getTableNames } from './service/cassandra-service';
+import { MAPPER } from './utils';
 
-const mapper = {
-  ascii: 'string',
-  bigint: 'number',
-  blob: 'Buffer',
-  boolean: 'boolean',
-  counter: 'number',
-  date: 'string',
-  decimal: 'number',
-  double: 'number',
-  duration: 'string',
-  float: 'number',
-  inet: 'string',
-  int: 'number',
-  list: 'array',
-  map: 'object',
-  set: 'set',
-  smallint: 'number',
-  text: 'string',
-  time: 'string',
-  timestamp: 'Date',
-  timeuuid: 'string',
-  tinyint: 'number',
-  tuple: 'tuple',
-  uuid: 'string',
-  varchar: 'string',
-  varint: 'number',
-  vector: 'vector',
-};
 function mapTypes(columnType: keyof typeof cassandraTypes.dataTypes) {
-  return mapper[columnType as keyof typeof mapper];
+  return MAPPER[columnType as keyof typeof MAPPER];
 }
 
 async function getTableColumns() {
-  const tableNames = await cassandraClient.execute(
-    `SELECT table_name, column_name, kind, position, type FROM system_schema.columns WHERE keyspace_name = 'messaging_service';`,
-    {},
-    {
-      prepare: true,
-    }
-  );
+  const tableNames = await getTableNames();
 
   const tables: {
     [tableName: string]: {
@@ -53,7 +21,7 @@ async function getTableColumns() {
         kind: 'regular' | 'clustering' | 'partition_key';
         position: number;
         type: keyof typeof cassandraTypes.dataTypes;
-        mappedType: (typeof mapper)[keyof typeof mapper];
+        mappedType: (typeof MAPPER)[keyof typeof MAPPER];
         name: string;
       }[];
     };
