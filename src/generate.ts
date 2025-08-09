@@ -1,76 +1,44 @@
-import { cassandraClient } from './cassandra-models/cassandra-client';
-import { types as cassandraTypes } from 'cassandra-driver';
 import pluralize from 'pluralize';
 import fs from 'fs/promises';
 import path from 'path';
-
-import { snakeToCamel, snakeToPascal, kebabCase, getToModel } from './utils';
-import { getTableNames } from './service/cassandra-service';
-import { MAPPER } from './utils';
-
-function mapTypes(columnType: keyof typeof cassandraTypes.dataTypes) {
-  return MAPPER[columnType as keyof typeof MAPPER];
-}
-
-async function getTableColumns() {
-  const tableNames = await getTableNames();
-
-  const tables: {
-    [tableName: string]: {
-      columns: {
-        kind: 'regular' | 'clustering' | 'partition_key';
-        position: number;
-        type: keyof typeof cassandraTypes.dataTypes;
-        mappedType: (typeof MAPPER)[keyof typeof MAPPER];
-        name: string;
-      }[];
-    };
-  } = {};
-
-  for (const row of tableNames.rows) {
-    if (!tables[row.table_name]) {
-      tables[row.table_name] = {
-        columns: [],
-      };
-    }
-    tables[row.table_name].columns.push({
-      kind: row.kind,
-      position: row.position,
-      type: row.type,
-      mappedType: mapTypes(row.type)!,
-      name: row.column_name,
-    });
-  }
-
-  return tables;
-}
+import {
+  snakeToCamel,
+  snakeToPascal,
+  kebabCase,
+  getToModel,
+  MAPPER,
+} from './utils';
+import { fetchTableSchemas } from './service/cassandra-service';
 
 export async function generateTypesAndMappers() {
-  const tables = await getTableColumns();
+  const tableSchemas = await fetchTableSchemas('messaging_service');
 
   const modelsDir = path.resolve(process.cwd(), 'src/cassandra-models');
   await fs.mkdir(modelsDir, { recursive: true });
 
-  for (const [tableName, table] of Object.entries(tables)) {
+  for (const table of tableSchemas) {
+    const { tableName, columns } = table;
     const interfaceName = pluralize.singular(snakeToPascal(tableName));
     const fileName = kebabCase(interfaceName) + '.ts';
 
     // Build PartitionKeys type lines
-    const partitionKeys = table.columns
+    const partitionKeys = columns
       .filter((c) => c.kind === 'partition_key')
       .sort((a, b) => a.position - b.position);
 
     const partitionKeyLines = partitionKeys.map((c) => {
-      if (c.name === 'bucket_id') {
+      if (c.column_name === 'bucket_id') {
         return `  ${snakeToCamel(
-          c.name
+          c.column_name
         )}: \`\${number}-\${number}-\${number}-\${number}\`;`;
       }
-      return `  ${snakeToCamel(c.name)}: ${c.mappedType};`;
+      return `  ${snakeToCamel(c.column_name)}: ${
+        MAPPER[c.type as keyof typeof MAPPER]
+      };`;
     });
 
     // Build ClusteringKeys union type (prefixes)
-    const clusteringKeys = table.columns
+    const clusteringKeys = columns
       .filter((c) => c.kind === 'clustering')
       .sort((a, b) => a.position - b.position);
 
@@ -80,7 +48,12 @@ export async function generateTypesAndMappers() {
       for (let i = 1; i <= clusteringKeys.length; i++) {
         const keysSlice = clusteringKeys.slice(0, i);
         const typeLines = keysSlice
-          .map((c) => `    ${snakeToCamel(c.name)}: ${c.mappedType};`)
+          .map(
+            (c) =>
+              `    ${snakeToCamel(c.column_name)}: ${
+                MAPPER[c.type as keyof typeof MAPPER]
+              };`
+          )
           .join('\n');
         unions.push(`  | {\n${typeLines}\n  }`);
       }
@@ -93,8 +66,10 @@ export async function generateTypesAndMappers() {
     content += `import { cassandraClient } from './cassandra-client';\n\n`;
 
     content += `export interface ${interfaceName} {\n`;
-    for (const column of table.columns) {
-      content += `  ${snakeToCamel(column.name)}: ${column.mappedType};\n`;
+    for (const column of columns) {
+      content += `  ${snakeToCamel(column.column_name)}: ${
+        MAPPER[column.type as keyof typeof MAPPER]
+      };\n`;
     }
     content += `}\n\n`;
 
@@ -112,10 +87,12 @@ export async function generateTypesAndMappers() {
     content += `      tables: ['${tableName}'],\n`;
     content += `      mappings: new cassandra.mapping.UnderscoreCqlToCamelCaseMappings(),\n`;
     content += `      columns: {\n`;
-    for (const column of table.columns) {
-      content += `        ${column.name}: {\n`;
-      content += `          name: '${snakeToCamel(column.name)}',\n`;
-      content += `          toModel: ${getToModel(column.type)},\n`;
+    for (const column of columns) {
+      content += `        ${column.column_name}: {\n`;
+      content += `          name: '${snakeToCamel(column.column_name)}',\n`;
+      if (column.type !== 'text' && column.type !== 'varchar') {
+        content += `          toModel: ${getToModel(column.type)},\n`;
+      }
       content += `        },\n`;
     }
     content += `      },\n`;
