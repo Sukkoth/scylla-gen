@@ -9,14 +9,13 @@ import {
   MAPPER,
 } from './utils';
 import { fetchTableSchemas } from './service/cassandra-service';
+import { highlightSyntax } from './highlight-syntax';
 
-export async function generateTypesAndMappers({
-  tables,
-  printOnly,
-}: {
+type Props = {
   tables: string[];
   printOnly?: boolean;
-}) {
+};
+export async function generateTypesAndMappers({ tables, printOnly }: Props) {
   const tableSchemas = await fetchTableSchemas('messaging_service', tables);
 
   const modelsDir = path.resolve(process.cwd(), 'src/cassandra-models');
@@ -120,7 +119,7 @@ export async function generateTypesAndMappers({
     content += `export default ${interfaceName};\n`;
 
     if (printOnly) {
-      console.log(content);
+      highlightSyntax(content, 'typescript');
     } else {
       const filePath = path.join(modelsDir, fileName);
       await fs.writeFile(filePath, content, 'utf-8');

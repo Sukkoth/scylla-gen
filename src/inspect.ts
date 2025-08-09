@@ -1,3 +1,4 @@
+import { highlightSyntax } from './highlight-syntax';
 import { fetchTableSchemas } from './service/cassandra-service';
 import { TableDefinition } from './types';
 
@@ -78,7 +79,7 @@ export async function inspectModels(
 
   // Print each table definition
   tableDefinitions.forEach((table) => {
-    console.log(printTableDefinition(table, keyspace));
+    highlightSyntax(printTableDefinition(table, keyspace), 'sql');
     console.log(); // Add newline between tables
   });
 }
