@@ -28,8 +28,6 @@ program
       )
     );
 
-    console.log('Models:', normalizedModels);
-
     await generateTypesAndMappers();
 
     if (options.format) {
