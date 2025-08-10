@@ -1,3 +1,4 @@
+import { DB_DEFAULT_KEYSPACE } from './constants';
 import { highlightSyntax } from './highlight-syntax';
 import { fetchTableSchemas } from './service/db-service';
 import { TableDefinition } from './types';
@@ -61,11 +62,11 @@ export async function inspectModels(
     ? [tableNames]
     : undefined;
 
-  const keyspace = keyspaceToFetch ?? process.env.SCYLLA_DEFAULT_KEYSPACE;
+  const keyspace = keyspaceToFetch ?? DB_DEFAULT_KEYSPACE;
 
   if (!keyspace) {
     console.error(
-      'No keyspace provided. Please provide a keyspace or set SCYLLA_DEFAULT_KEYSPACE environment variable'
+      'No keyspace provided. Please provide a keyspace or set DB_DEFAULT_KEYSPACE environment variable'
     );
     process.exit(1);
   }
