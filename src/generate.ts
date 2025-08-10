@@ -23,7 +23,7 @@ export async function generateTypesAndMappers({
 }: Props) {
   const tableSchemas = await fetchTableSchemas(keyspace, tables);
 
-  const modelsDir = path.resolve(process.cwd(), 'src/cassandra-models');
+  const modelsDir = path.resolve(process.cwd(), 'src/models');
   await fs.mkdir(modelsDir, { recursive: true });
 
   for (const table of tableSchemas) {
