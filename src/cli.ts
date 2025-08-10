@@ -8,21 +8,19 @@ const program = new Command();
 
 program
   .name('scylla-gen')
-  .description('CLI to generate Cassandra models')
+  .description('CLI to generate table models')
   .version('0.0.1');
 
 program
   .command('init')
-  .description(
-    'Initialize cassandra client to connect to your cassandra cluster'
-  )
+  .description('Initialize DB client to connect to your cluster')
   .action(async () => {
     init();
   });
 
 program
   .command('generate')
-  .description('Generate Cassandra models')
+  .description('Generate table models')
   .option(
     '-f, --format',
     'Format models after generation using local prettier in your project'
@@ -34,8 +32,7 @@ program
   .option('-t, --tables <names...>', 'Table names (space or comma separated)')
   .option(
     '-k, --keyspace <keyspace>',
-    'Select which keyspace to fetch the tables from (default from env will be used if not provided)',
-    process.env.SCYLLA_DEFAULT_KEYSPACE
+    'Select which keyspace to fetch the tables from (default from env will be used if not provided)'
   )
   .action(async (options) => {
     const tables: string[] = Array.from(
@@ -63,7 +60,7 @@ program
   .command('inspect')
   .argument('<table_names...>', 'Table name(s), single or multiple')
   .option('-k, --keyspace <keyspace>', 'Keyspace name')
-  .description('Inspect Cassandra models for one or more tables')
+  .description('Inspect DDL for one or more tables')
   .action(async (tableNames: string[], options) => {
     await inspectModels(tableNames, options.keyspace);
     process.exit(0);
@@ -71,7 +68,7 @@ program
 
 program
   .command('format')
-  .description('Format models using local prettier')
+  .description('Format generated models using local prettier')
   .action(async () => {
     await formatModels();
     process.exit(0);
