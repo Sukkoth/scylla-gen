@@ -12,7 +12,7 @@ export async function init() {
   const absolutePath = path.resolve(process.cwd(), relativePath);
 
   console.log(
-    `DB client is initialized at \x1b]8;;file://${absolutePath}\x07${relativePath}\x1b]8;;\x07`
+    `DB client is initialized at \x1b]8;;file://${absolutePath}\x07${relativePath}\x1b]8;;\x07`,
   );
 
   process.exit(0);
@@ -48,7 +48,7 @@ export const dbClient = new cassandra.Client({
 
   if (fs.existsSync(filePath)) {
     const answer = await askQuestion(
-      `DB client already exists. Overwrite? (y/N): `
+      `DB client already exists. Overwrite? (y/N): `,
     );
     if (answer.toLowerCase() !== 'y') {
       console.log('Aborted.');
@@ -60,7 +60,7 @@ export const dbClient = new cassandra.Client({
   }
 
   const [error] = safeCallSync(() =>
-    fs.writeFileSync(filePath, content, { flag: 'w' })
+    fs.writeFileSync(filePath, content, { flag: 'w' }),
   );
   if (error) {
     console.error(`Error occurred while writing file: ${error.message}`);

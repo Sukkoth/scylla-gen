@@ -6,7 +6,7 @@ import { TableDefinition } from './types';
 // Format and print CREATE TABLE statement
 function printTableDefinition(
   table: TableDefinition,
-  keyspace: string
+  keyspace: string,
 ): string {
   const { tableName, columns } = table;
 
@@ -53,20 +53,20 @@ function printTableDefinition(
 // Main function to inspect models
 export async function inspectModels(
   tableNames?: string | string[],
-  keyspaceToFetch?: string
+  keyspaceToFetch?: string,
 ): Promise<void> {
   // Normalize input to array
   const tables = Array.isArray(tableNames)
     ? tableNames
     : tableNames
-    ? [tableNames]
-    : undefined;
+      ? [tableNames]
+      : undefined;
 
   const keyspace = keyspaceToFetch ?? DB_DEFAULT_KEYSPACE;
 
   if (!keyspace) {
     console.error(
-      'No keyspace provided. Please provide a keyspace or set DB_DEFAULT_KEYSPACE environment variable'
+      'No keyspace provided. Please provide a keyspace or set DB_DEFAULT_KEYSPACE environment variable',
     );
     process.exit(1);
   }
