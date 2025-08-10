@@ -4,18 +4,15 @@ import readline from 'readline';
 import { safeCallSync } from './utils';
 
 export async function init() {
-  const filePath = path.resolve(
-    process.cwd(),
-    'src/models/cassandra-client.ts'
-  );
+  const filePath = path.resolve(process.cwd(), 'src/models/db-client.ts');
 
   console.log('Initializing scylla-gen...');
   await writeFileSafely(filePath);
-  const relativePath = 'src/models/cassandra-client.ts';
+  const relativePath = 'src/models/db-client.ts';
   const absolutePath = path.resolve(process.cwd(), relativePath);
 
   console.log(
-    `Cassandra Driver client is initialized at \x1b]8;;file://${absolutePath}\x07${relativePath}\x1b]8;;\x07`
+    `DB client is initialized at \x1b]8;;file://${absolutePath}\x07${relativePath}\x1b]8;;\x07`
   );
 
   process.exit(0);
@@ -38,31 +35,20 @@ function askQuestion(question: string): Promise<string> {
 async function writeFileSafely(filePath: string) {
   const content = `import cassandra from 'cassandra-driver';
 
-const contactPointsRaw = process.env.SCYLLA_CONTACT_POINTS;
-const keyspace = process.env.SCYLLA_DEFAULT_KEYSPACE;
-const localDataCenter = process.env.SCYLLA_DATA_CENTER;
-
-if (!contactPointsRaw) {
-  throw new Error('SCYLLA_CONTACT_POINTS env variable is not set');
-}
-
-if (!keyspace) {
-  throw new Error('SCYLLA_DEFAULT_KEYSPACE env variable is not set');
-}
-
-if (!localDataCenter) {
-  throw new Error('SCYLLA_DATA_CENTER env variable is not set');
-}
-
-export const cassandraClient = new cassandra.Client({
-  contactPoints: contactPointsRaw.split(','),
-  keyspace,
-  localDataCenter,
-});`;
+export const dbClient = new cassandra.Client({
+  contactPoints: process.env.DB_CONTACT_POINTS?.split(','),
+  keyspace: process.env.DB_DEFAULT_KEYSPACE,
+  localDataCenter: process.env.DB_LOCAL_DATA_CENTER,
+  credentials: {
+    username: process.env.DB_USERNAME!,
+    password: process.env.DB_PASSWORD!,
+  },
+});
+`;
 
   if (fs.existsSync(filePath)) {
     const answer = await askQuestion(
-      `Cassandra client already exists. Overwrite? (y/N): `
+      `DB client already exists. Overwrite? (y/N): `
     );
     if (answer.toLowerCase() !== 'y') {
       console.log('Aborted.');
