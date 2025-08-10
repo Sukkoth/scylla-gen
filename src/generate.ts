@@ -91,19 +91,23 @@ export async function generateTypesAndMappers({
       content += `type ClusteringKeys =\n${clusteringKeysUnion};\n\n`;
     }
 
-    content += `const mapper = new cassandra.mapping.Mapper(cassandraClient, {\n`;
+    content += `const mapper = new cassandra.mapping.Mapper(dbClient, {\n`;
     content += `  models: {\n`;
     content += `    ${interfaceName}: {\n`;
     content += `      tables: ['${tableName}'],\n`;
     content += `      mappings: new cassandra.mapping.UnderscoreCqlToCamelCaseMappings(),\n`;
     content += `      columns: {\n`;
     for (const column of columns) {
-      content += `        ${column.column_name}: {\n`;
-      content += `          name: '${snakeToCamel(column.column_name)}',\n`;
-      if (column.type !== 'text' && column.type !== 'varchar') {
+      if (
+        column.type !== 'text' &&
+        column.type !== 'varchar' &&
+        column.type !== 'ascii'
+      ) {
+        content += `        ${column.column_name}: {\n`;
+        content += `          name: '${snakeToCamel(column.column_name)}',\n`;
         content += `          toModel: ${getToModel(column.type)},\n`;
+        content += `        },\n`;
       }
-      content += `        },\n`;
     }
     content += `      },\n`;
     content += `    },\n`;
