@@ -1,5 +1,5 @@
 import { DB_DEFAULT_KEYSPACE } from './constants';
-import { highlightSyntax } from './highlight-syntax';
+import { highlightSyntax } from './utils';
 import { fetchTableSchemas } from './service/db-service';
 import { TableDefinition } from './types';
 
