@@ -23,16 +23,16 @@ program
   .description('Generate table models')
   .option(
     '-f, --format',
-    'Format models after generation using local prettier in your project'
+    'Format models after generation using local prettier in your project',
   )
   .option(
     '-p, --print-only',
-    'Print models to console instead of writing to file'
+    'Print models to console instead of writing to file',
   )
   .option('-t, --tables <names...>', 'Table names (space or comma separated)')
   .option(
     '-k, --keyspace <keyspace>',
-    'Select which keyspace to fetch the tables from (default from env will be used if not provided)'
+    'Select which keyspace to fetch the tables from (default from env will be used if not provided)',
   )
   .action(async (options) => {
     const tables: string[] = Array.from(
@@ -40,8 +40,8 @@ program
         (options.tables || [])
           .flatMap((m: string) => m.split(','))
           .map((m: string) => m.trim())
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     );
 
     await generateTypesAndMappers({

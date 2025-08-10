@@ -62,7 +62,7 @@ export async function generateTypesAndMappers({
             (c) =>
               `    ${snakeToCamel(c.column_name)}: ${
                 MAPPER[c.type as keyof typeof MAPPER]
-              };`
+              };`,
           )
           .join('\n');
         unions.push(`  | {\n${typeLines}\n  }`);
@@ -84,7 +84,7 @@ export async function generateTypesAndMappers({
     content += `}\n\n`;
 
     content += `type PartitionKeys = {\n${partitionKeyLines.join(
-      '\n'
+      '\n',
     )}\n};\n\n`;
 
     if (clusteringKeys.length > 0) {

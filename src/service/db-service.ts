@@ -5,19 +5,20 @@ import { DB_DEFAULT_KEYSPACE } from '../constants';
 
 /**
  * Fetch table schema definitions from Cassandra.
- * @param keyspace - keyspace name
- * @param tableNames - table names to fetch (optional)
- * @returns array of table definitions
+ *
+ * @param keyspace - Keyspace name
+ * @param tableNames - Table names to fetch (optional)
+ * @returns Array of table definitions
  */
 export async function fetchTableSchemas(
   keyspaceToFetch?: string,
-  tableNames?: string[]
+  tableNames?: string[],
 ): Promise<TableDefinition[]> {
   const keyspace = keyspaceToFetch ?? DB_DEFAULT_KEYSPACE;
 
   if (!keyspace) {
     console.error(
-      'No keyspace provided. Please provide a keyspace or set DB_DEFAULT_KEYSPACE environment variable'
+      'No keyspace provided. Please provide a keyspace or set DB_DEFAULT_KEYSPACE environment variable',
     );
     process.exit(1);
   }
@@ -34,7 +35,7 @@ export async function fetchTableSchemas(
   const params = tableNames || [];
 
   const [error, result] = await safeCall(() =>
-    dbClient.execute(query, params, { prepare: true })
+    dbClient.execute(query, params, { prepare: true }),
   );
   if (error) {
     console.error('Failed to fetch table schemas:', error.message);

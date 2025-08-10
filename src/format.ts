@@ -7,11 +7,11 @@ const execAsync = promisify(exec);
 export async function formatModels() {
   console.log('Formatting models...');
   const [error] = await safeCall(() =>
-    execAsync('pnpm prettier --write "src/models/**/*.{ts,js}"')
+    execAsync('pnpm prettier --write "src/models/**/*.{ts,js}"'),
   );
   if (error) {
     console.error(
-      'Make sure you have configured prettier in your project to use this feature'
+      'Make sure you have configured prettier in your project to use this feature',
     );
     process.exit(1);
   }
