@@ -73,7 +73,7 @@ export async function generateTypesAndMappers({
     let content = '';
 
     content += `import cassandra from 'cassandra-driver';\n`;
-    content += `import { cassandraClient } from './cassandra-client';\n\n`;
+    content += `import { dbClient } from './db-client';\n\n`;
 
     content += `export interface ${interfaceName} {\n`;
     for (const column of columns) {
