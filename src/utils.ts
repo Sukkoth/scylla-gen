@@ -1,3 +1,7 @@
+import { ColumnTypes } from './types';
+import { parse, highlight } from 'cli-highlight';
+import * as fs from 'fs';
+
 export function snakeToCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
@@ -11,10 +15,33 @@ export function kebabCase(str: string): string {
   return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-export function getToModel(type: string) {
-  if (type === 'uuid' || type === 'text') return '(val) => val.toString()';
+export function getToModel(type: ColumnTypes) {
+  if (type === 'uuid') return '(val: cassandra.types.Uuid) => val.toString()';
+  if (type === 'timeuuid')
+    return '(val: cassandra.types.TimeUuid) => val.toString()';
   if (type === 'int' || type === 'counter') return '(val) => Number(val)';
+  if (type === 'varint')
+    return '(val: cassandra.types.Integer) => val.toNumber()';
+  if (type === 'bigint') return '(val: cassandra.types.Long) => val.toNumber()';
   if (type === 'timestamp') return '(val) => new Date(val)';
+  if (type === 'date')
+    return '(val: cassandra.types.LocalDate) => val.toString()';
+  if (type === 'decimal')
+    return '(val: cassandra.types.BigDecimal) => val.toNumber()';
+  if (type === 'duration')
+    return '(val: cassandra.types.Duration) => val.toString()';
+  if (type === 'inet')
+    return '(val: cassandra.types.InetAddress) => val.toString()';
+  if (type.includes('tuple')) {
+    return '(val: cassandra.types.Tuple) => val.elements';
+  }
+  if (type === 'time')
+    return '(val: cassandra.types.LocalTime) => val.toString()';
+  if (type.includes('vector')) {
+    return '(val: cassandra.types.Vector) => val.elements';
+  }
+
+  console.log('unknown type', type);
   return '(val) => val';
 }
 
@@ -38,31 +65,14 @@ export async function safeCall<TArgs extends unknown[], TResult>(
     .catch((e) => [e instanceof Error ? e : new Error(String(e))] as [Error]);
 }
 
-export const MAPPER = {
-  ascii: 'string',
-  bigint: 'number',
-  blob: 'Buffer',
-  boolean: 'boolean',
-  counter: 'number',
-  date: 'string',
-  decimal: 'number',
-  double: 'number',
-  duration: 'string',
-  float: 'number',
-  inet: 'string',
-  int: 'number',
-  list: 'array',
-  map: 'object',
-  set: 'set',
-  smallint: 'number',
-  text: 'string',
-  time: 'string',
-  timestamp: 'Date',
-  timeuuid: 'string',
-  tinyint: 'number',
-  tuple: 'tuple',
-  uuid: 'string',
-  varchar: 'string',
-  varint: 'number',
-  vector: 'vector',
-};
+export function highlightSyntax(
+  content: string,
+  language: 'typescript' | 'sql',
+) {
+  const theme = fs.readFileSync('./syntax-highlight-theme.json', 'utf8');
+  const code = highlight(content, {
+    language,
+    theme: parse(theme),
+  });
+  console.log(code);
+}
