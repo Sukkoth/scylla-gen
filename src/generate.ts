@@ -8,7 +8,7 @@ import {
   getToModel,
   MAPPER,
 } from './utils';
-import { fetchTableSchemas } from './service/cassandra-service';
+import { fetchTableSchemas } from './service/db-service';
 import { highlightSyntax } from './highlight-syntax';
 
 type Props = {

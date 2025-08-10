@@ -1,5 +1,5 @@
 import { highlightSyntax } from './highlight-syntax';
-import { fetchTableSchemas } from './service/cassandra-service';
+import { fetchTableSchemas } from './service/db-service';
 import { TableDefinition } from './types';
 
 // Format and print CREATE TABLE statement

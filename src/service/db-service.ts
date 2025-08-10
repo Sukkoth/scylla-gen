@@ -1,6 +1,6 @@
 import { safeCall } from '../utils';
 import { SchemaRow, TableDefinition } from '../types';
-import { cassandraClient } from './cassandra-client';
+import { dbClient } from './db-client';
 
 /**
  * Fetch table schema definitions from Cassandra.
@@ -33,7 +33,7 @@ export async function fetchTableSchemas(
   const params = tableNames || [];
 
   const [error, result] = await safeCall(() =>
-    cassandraClient.execute(query, params, { prepare: true })
+    dbClient.execute(query, params, { prepare: true })
   );
   if (error) {
     console.error('Failed to fetch table schemas:', error.message);
