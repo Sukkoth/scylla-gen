@@ -1,0 +1,16 @@
+{
+  "keyword": ["blueBright", "bold"],
+  "string": ["greenBright", "italic"],
+  "number": ["yellowBright", "bold"],
+  "comment": ["magentaBright", "italic"],
+  "literal": ["yellowBright", "bold"],
+  "meta": ["cyanBright", "dim"],
+  "meta-keyword": ["blueBright", "italic"],
+  "meta-string": ["greenBright"],
+  "default": ["whiteBright"],
+  "operator": ["redBright", "bold"],
+  "punctuation": ["whiteBright"],
+  "attribute": ["whiteBright", "bold"],
+  "type": ["cyanBright", "bold"],
+  "variable": ["whiteBright", "italic"]
+}

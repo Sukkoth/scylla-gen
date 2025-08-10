@@ -12,6 +12,7 @@
     "dev": "bun run src/index.ts"
   },
   "dependencies": {
+    "cli-highlight": "^2.1.11",
     "commander": "^14.0.0",
     "pluralize": "^8.0.0"
   },

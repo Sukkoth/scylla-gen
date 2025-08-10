@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { generateTypesAndMappers } from './generate';
 import { formatModels } from './format';
 import { inspectModels } from './inspect';
+import { init } from './init';
 
 const program = new Command();
 
@@ -11,26 +12,46 @@ program
   .version('0.0.1');
 
 program
+  .command('init')
+  .description(
+    'Initialize cassandra client to connect to your cassandra cluster'
+  )
+  .action(async () => {
+    init();
+  });
+
+program
   .command('generate')
   .description('Generate Cassandra models')
   .option(
     '-f, --format',
     'Format models after generation using local prettier in your project'
   )
-  .option('-m, --models <names...>', 'Model names (space or comma separated)')
+  .option(
+    '-p, --print-only',
+    'Print models to console instead of writing to file'
+  )
+  .option('-t, --tables <names...>', 'Table names (space or comma separated)')
+  .option(
+    '-k, --keyspace <keyspace>',
+    'Select which keyspace to fetch the tables from (default from env will be used if not provided)',
+    process.env.SCYLLA_DEFAULT_KEYSPACE
+  )
   .action(async (options) => {
-    const normalizedModels = Array.from(
+    const tables: string[] = Array.from(
       new Set(
-        (options.models || [])
+        (options.tables || [])
           .flatMap((m: string) => m.split(','))
           .map((m: string) => m.trim())
           .filter(Boolean)
       )
     );
 
-    console.log('Models:', normalizedModels);
-
-    await generateTypesAndMappers();
+    await generateTypesAndMappers({
+      tables,
+      printOnly: options.printOnly,
+      keyspace: options.keyspace,
+    });
 
     if (options.format) {
       await formatModels();
@@ -41,9 +62,10 @@ program
 program
   .command('inspect')
   .argument('<table_names...>', 'Table name(s), single or multiple')
+  .option('-k, --keyspace <keyspace>', 'Keyspace name')
   .description('Inspect Cassandra models for one or more tables')
-  .action(async (tableNames: string[]) => {
-    await inspectModels(tableNames);
+  .action(async (tableNames: string[], options) => {
+    await inspectModels(tableNames, options.keyspace);
     process.exit(0);
   });
 

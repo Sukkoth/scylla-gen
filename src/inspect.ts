@@ -1,8 +1,12 @@
+import { highlightSyntax } from './highlight-syntax';
 import { fetchTableSchemas } from './service/cassandra-service';
 import { TableDefinition } from './types';
 
 // Format and print CREATE TABLE statement
-function printTableDefinition(table: TableDefinition): string {
+function printTableDefinition(
+  table: TableDefinition,
+  keyspace: string
+): string {
   const { tableName, columns } = table;
 
   // Partition and clustering keys
@@ -36,7 +40,7 @@ function printTableDefinition(table: TableDefinition): string {
 
   // Build CREATE TABLE statement
   const output = [
-    `CREATE TABLE messaging_service.${tableName} (`,
+    `CREATE TABLE ${keyspace}.${tableName} (`,
     ...columns.map((row) => `  ${row.column_name} ${row.type},`),
     `  ${primaryKey}`,
     `)${clusteringOrder};`,
@@ -47,7 +51,8 @@ function printTableDefinition(table: TableDefinition): string {
 
 // Main function to inspect models
 export async function inspectModels(
-  tableNames?: string | string[]
+  tableNames?: string | string[],
+  keyspaceToFetch?: string
 ): Promise<void> {
   // Normalize input to array
   const tables = Array.isArray(tableNames)
@@ -56,20 +61,25 @@ export async function inspectModels(
     ? [tableNames]
     : undefined;
 
-  const [error, tableDefinitions] = await fetchTableSchemas(tables);
-  if (error) {
-    console.error('Failed to fetch schema:', error.message);
-    return;
+  const keyspace = keyspaceToFetch ?? process.env.SCYLLA_DEFAULT_KEYSPACE;
+
+  if (!keyspace) {
+    console.error(
+      'No keyspace provided. Please provide a keyspace or set SCYLLA_DEFAULT_KEYSPACE environment variable'
+    );
+    process.exit(1);
   }
 
+  const tableDefinitions = await fetchTableSchemas(keyspace, tables);
+
   if (!tableDefinitions.length) {
-    console.error('No tables found in keyspace messaging_service');
-    return;
+    console.error(`No tables found in keyspace ${keyspace}`);
+    process.exit(1);
   }
 
   // Print each table definition
   tableDefinitions.forEach((table) => {
-    console.log(printTableDefinition(table));
+    highlightSyntax(printTableDefinition(table, keyspace), 'sql');
     console.log(); // Add newline between tables
   });
 }

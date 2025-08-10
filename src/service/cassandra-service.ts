@@ -1,26 +1,51 @@
-import { cassandraClient } from '../cassandra-driver';
 import { safeCall } from '../utils';
 import { SchemaRow, TableDefinition } from '../types';
+import { cassandraClient } from './cassandra-client';
 
+/**
+ * Fetch table schema definitions from Cassandra.
+ * @param keyspace - keyspace name
+ * @param tableNames - table names to fetch (optional)
+ * @returns array of table definitions
+ */
 export async function fetchTableSchemas(
+  keyspaceToFetch?: string,
   tableNames?: string[]
-): Promise<[Error | null, TableDefinition[]]> {
+): Promise<TableDefinition[]> {
+  const keyspace = keyspaceToFetch ?? process.env.SCYLLA_DEFAULT_KEYSPACE;
+
+  if (!keyspace) {
+    console.error(
+      'No keyspace provided. Please provide a keyspace or set SCYLLA_DEFAULT_KEYSPACE environment variable'
+    );
+    process.exit(1);
+  }
+
   const query = tableNames?.length
     ? `SELECT table_name, column_name, clustering_order, kind, position, type 
        FROM system_schema.columns 
-       WHERE keyspace_name = 'messaging_service' 
+       WHERE keyspace_name = '${keyspace}' 
        AND table_name IN (${tableNames.map(() => '?').join(', ')})`
     : `SELECT table_name, column_name, clustering_order, kind, position, type 
        FROM system_schema.columns 
-       WHERE keyspace_name = 'messaging_service'`;
+       WHERE keyspace_name = '${keyspace}'`;
+
   const params = tableNames || [];
 
   const [error, result] = await safeCall(() =>
     cassandraClient.execute(query, params, { prepare: true })
   );
-  if (error) return [error, []];
+  if (error) {
+    console.error('Failed to fetch table schemas:', error.message);
+    process.exit(1);
+  }
 
-  // Group rows by table name
+  if (result.rowLength === 0) {
+    console.error(`No tables found in keyspace ${keyspace}`);
+    process.exit(1);
+  }
+
+  // Group rows by table name since the query returns all columns for all tables requested
   const tableMap = new Map<string, SchemaRow[]>();
   result?.rows.forEach((row: any) => {
     const schemaRow: SchemaRow = {
@@ -31,6 +56,7 @@ export async function fetchTableSchemas(
       position: row.position,
       type: row.type,
     };
+
     const tableName = schemaRow.table_name;
     if (!tableMap.has(tableName)) tableMap.set(tableName, []);
     tableMap.get(tableName)!.push(schemaRow);
@@ -41,5 +67,5 @@ export async function fetchTableSchemas(
     columns,
   }));
 
-  return [null, tables];
+  return tables;
 }
