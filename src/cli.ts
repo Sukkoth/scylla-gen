@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { generateTypesAndMappers } from './generate';
 import { formatModels } from './format';
 import { inspectModels } from './inspect';
+import { init } from './init';
 
 const program = new Command();
 
@@ -9,6 +10,15 @@ program
   .name('scylla-gen')
   .description('CLI to generate Cassandra models')
   .version('0.0.1');
+
+program
+  .command('init')
+  .description(
+    'Initialize cassandra client to connect to your cassandra cluster'
+  )
+  .action(async () => {
+    init();
+  });
 
 program
   .command('generate')
