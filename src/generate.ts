@@ -7,6 +7,7 @@ import {
   kebabCase,
   getToModel,
   highlightSyntax,
+  writeFileSafely,
 } from './utils';
 import { fetchTableSchemas } from './service/db-service';
 import { ColumnTypes, SchemaRow } from './types';
@@ -16,6 +17,7 @@ type Props = {
   tables: string[];
   printOnly?: boolean;
   keyspace?: string;
+  overwrite?: boolean;
 };
 /**
  * Generate type definitions and mappers for the specified tables.
@@ -28,6 +30,7 @@ export async function generateTypesAndMappers({
   tables,
   printOnly,
   keyspace,
+  overwrite,
 }: Props) {
   const tableSchemas = await fetchTableSchemas(keyspace, tables);
 
@@ -216,8 +219,11 @@ export async function generateTypesAndMappers({
     } else {
       /** Write content to file */
       const filePath = path.join(modelsDir, fileName);
-      await fs.writeFile(filePath, content, 'utf-8');
-      console.log(`Written ${fileName}`);
+      const checkExists = !overwrite;
+      const res = await writeFileSafely(filePath, content, checkExists, false);
+      if (res === 'written' || res === 'overwritten')
+        console.log(`Written ${fileName}`);
+      if (res === 'aborted') console.log(`Aborted ${fileName}`);
     }
   }
 }
