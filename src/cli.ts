@@ -8,7 +8,7 @@ const program = new Command();
 
 program
   .name('scylla-gen')
-  .description('CLI to generate table models')
+  .description('CLI to generate table models for ScyllaDB/Cassandra')
   .version('0.0.1');
 
 program
@@ -20,9 +20,9 @@ program
 
 program
   .command('generate')
-  .description('Generate table models')
+  .description('Generate models(object mappers) for your tables')
   .option(
-    '-f, --format',
+    '--format',
     'Format models after generation using local prettier in your project',
   )
   .option(
@@ -33,6 +33,10 @@ program
   .option(
     '-k, --keyspace <keyspace>',
     'Select which keyspace to fetch the tables from (default from env will be used if not provided)',
+  )
+  .option(
+    '-f, --force',
+    'Force overwrite existing models without asking for confirmation',
   )
   .action(async (options) => {
     const tables: string[] = Array.from(
@@ -48,6 +52,7 @@ program
       tables,
       printOnly: options.printOnly,
       keyspace: options.keyspace,
+      overwrite: options.force,
     });
 
     if (options.format) {
