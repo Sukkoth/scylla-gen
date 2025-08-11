@@ -3,6 +3,7 @@ import { parse, highlight } from 'cli-highlight';
 import * as fs from 'fs';
 import readline from 'readline';
 import path from 'path';
+import theme from './syntax-highlight-theme.json';
 
 export function snakeToCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -71,10 +72,9 @@ export function highlightSyntax(
   content: string,
   language: 'typescript' | 'sql',
 ) {
-  const theme = fs.readFileSync('./syntax-highlight-theme.json', 'utf8');
   const code = highlight(content, {
     language,
-    theme: parse(theme),
+    theme: parse(JSON.stringify(theme)),
   });
   console.log(code);
 }
