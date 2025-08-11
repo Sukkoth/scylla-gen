@@ -27,6 +27,9 @@ export const dbClient = new cassandra.Client({
     username: process.env.DB_USERNAME!,
     password: process.env.DB_PASSWORD!,
   },
+  protocolOptions: {
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
+  },
 });
 `;
   await writeFileSafely(filePath, content);
