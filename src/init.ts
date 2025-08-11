@@ -1,13 +1,11 @@
-import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
-import { safeCallSync } from './utils';
+import { writeFileSafely } from './utils';
 
 export async function init() {
   const filePath = path.resolve(process.cwd(), 'src/models/db-client.ts');
 
   console.log('Initializing scylla-gen...');
-  await writeFileSafely(filePath);
+  await writeClient(filePath);
   const relativePath = 'src/models/db-client.ts';
   const absolutePath = path.resolve(process.cwd(), relativePath);
 
@@ -18,21 +16,7 @@ export async function init() {
   process.exit(0);
 }
 
-function askQuestion(question: string): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
-
-async function writeFileSafely(filePath: string) {
+async function writeClient(filePath: string) {
   const content = `import cassandra from 'cassandra-driver';
 
 export const dbClient = new cassandra.Client({
@@ -45,25 +29,5 @@ export const dbClient = new cassandra.Client({
   },
 });
 `;
-
-  if (fs.existsSync(filePath)) {
-    const answer = await askQuestion(
-      `DB client already exists. Overwrite? (y/N): `,
-    );
-    if (answer.toLowerCase() !== 'y') {
-      console.log('Aborted.');
-      process.exit(0);
-    }
-  } else {
-    // Ensure the parent directory exists
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  }
-
-  const [error] = safeCallSync(() =>
-    fs.writeFileSync(filePath, content, { flag: 'w' }),
-  );
-  if (error) {
-    console.error(`Error occurred while writing file: ${error.message}`);
-    process.exit(1);
-  }
+  await writeFileSafely(filePath, content);
 }
