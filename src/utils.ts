@@ -1,6 +1,8 @@
 import { ColumnTypes } from './types';
 import { parse, highlight } from 'cli-highlight';
 import * as fs from 'fs';
+import readline from 'readline';
+import path from 'path';
 
 export function snakeToCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -75,4 +77,48 @@ export function highlightSyntax(
     theme: parse(theme),
   });
   console.log(code);
+}
+
+export function askQuestion(question: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+export async function writeFileSafely(
+  filePath: string,
+  content: string,
+  checkExists = true,
+  exitOnNoOverwrite = true,
+) {
+  if (checkExists && fs.existsSync(filePath)) {
+    const answer = await askQuestion(
+      `File ${filePath} already exists. Overwrite? (y/N): `,
+    );
+    if (answer.toLowerCase() !== 'y') {
+      if (exitOnNoOverwrite) process.exit(0);
+      return 'aborted';
+    }
+    return 'overwritten';
+  } else {
+    // Ensure the parent directory exists
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  }
+
+  const [error] = safeCallSync(() =>
+    fs.writeFileSync(filePath, content, { flag: 'w' }),
+  );
+  if (error) {
+    console.error(`Error occurred while writing file: ${error.message}`);
+    process.exit(1);
+  }
+  return 'written';
 }
