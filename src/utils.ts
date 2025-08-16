@@ -107,18 +107,17 @@ export async function writeFileSafely(
       if (exitOnNoOverwrite) process.exit(0);
       return 'aborted';
     }
-    return 'overwritten';
   } else {
-    // Ensure the parent directory exists
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
   }
 
-  const [error] = safeCallSync(() =>
-    fs.writeFileSync(filePath, content, { flag: 'w' }),
+  const [error] = safeCallSync(
+    () => fs.writeFileSync(filePath, content, { flag: 'w' }), // 'w' overwrites
   );
   if (error) {
     console.error(`Error occurred while writing file: ${error.message}`);
     process.exit(1);
   }
-  return 'written';
+
+  return fs.existsSync(filePath) ? 'overwritten' : 'written';
 }
