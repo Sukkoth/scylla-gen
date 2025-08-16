@@ -79,23 +79,20 @@ export async function generateTypesAndMappers({
      * preceding key.
      */
 
-    let clusteringKeysTypeDefinition = '';
-    if (clusteringKeys.length > 0) {
-      const unions: string[] = [];
+    let clusteringKeysTypeDefinition: string[] = [];
+    let orderedClusteringKeys = '';
 
-      for (let i = 1; i <= clusteringKeys.length; i++) {
-        const keysSlice = clusteringKeys.slice(0, i);
-        const typeLines = keysSlice
-          .map(
-            (c) =>
-              `    ${snakeToCamel(c.column_name)}: ${
-                MAPPER[c.type as ColumnTypes]
-              };`,
-          )
-          .join('\n');
-        unions.push(`  | {\n${typeLines}\n  }`);
-      }
-      clusteringKeysTypeDefinition = unions.join('\n');
+    if (clusteringKeys.length > 0) {
+      clusteringKeysTypeDefinition = clusteringKeys.map((c) => {
+        return `  ${snakeToCamel(c.column_name)}: ${
+          MAPPER[c.type as ColumnTypes]
+        };`;
+      });
+      orderedClusteringKeys = `type OrderedClusteringKeys = ClusteringOrder<
+      ClusteringKeys,
+      // Clustering keys order (do not modify unless you have changed the order on your table)
+      [${clusteringKeys.map((c) => `'${snakeToCamel(c.column_name)}'`).join(', ')}]
+    >;`;
     }
 
     /** Build content which defines the model */
@@ -103,7 +100,8 @@ export async function generateTypesAndMappers({
 
     /** Build imports */
     content += `import cassandra from 'cassandra-driver';\n`;
-    content += `import { dbClient } from './db-client';\n\n`;
+    content += `import { dbClient } from './db-client';\n`;
+    content += `import { ${clusteringKeys.length ? 'ClusteringOrder, ' : ''}ModelMapper } from './types';\n\n`;
 
     /** Build interface for the columns */
     content += `export interface ${interfaceName} {\n`;
@@ -180,7 +178,10 @@ export async function generateTypesAndMappers({
 
     /** Build ClusteringKeys type */
     if (clusteringKeys.length > 0) {
-      content += `type ClusteringKeys =\n${clusteringKeysTypeDefinition};\n\n`;
+      content += `type ClusteringKeys = {\n${clusteringKeysTypeDefinition.join(
+        '\n',
+      )}\n};\n\n`;
+      content += orderedClusteringKeys + `\n\n`;
     }
 
     /** Build object mapper for the table */
@@ -199,19 +200,30 @@ export async function generateTypesAndMappers({
     content += `});\n\n`;
 
     /** Build mapper interface */
-    content += `interface ${interfaceName}Mapper extends cassandra.mapping.ModelMapper<${interfaceName}> {\n`;
-    content += `  get(\n`;
-    content += `    doc: PartitionKeys${
-      clusteringKeys.length > 0 ? ' & ClusteringKeys' : ''
-    },\n`;
-    content += `    docInfo?: { fields?: string[] },\n`;
-    content += `    executionOptions?: string | cassandra.mapping.MappingExecutionOptions,\n`;
-    content += `  ): Promise<null | ${interfaceName}>;\n`;
-    content += `}\n\n`;
+    // content += `interface ${interfaceName}Mapper extends cassandra.mapping.ModelMapper<${interfaceName}> {\n`;
+    // content += `  get(\n`;
+    // content += `    doc: PartitionKeys${
+    //   clusteringKeys.length > 0 ? ' & ClusteringKeys' : ''
+    // },\n`;
+    // content += `    docInfo?: { fields?: string[] },\n`;
+    // content += `    executionOptions?: string | cassandra.mapping.MappingExecutionOptions,\n`;
+    // content += `  ): Promise<null | ${interfaceName}>;\n`;
+    // content += `}\n\n`;
+
+    content += `type ${interfaceName}Mapper = ModelMapper<
+      ${interfaceName},
+      PartitionKeys${
+        clusteringKeys.length
+          ? `,
+      ClusteringKeys,
+      OrderedClusteringKeys`
+          : ''
+      }
+    >;\n`;
 
     /** Export mapper */
-    content += `const ${interfaceName} = mapper.forModel('${interfaceName}') as ${interfaceName}Mapper;\n`;
-    content += `export default ${interfaceName};\n`;
+    content += `const ${interfaceName}Model = mapper.forModel('${interfaceName}') as ${interfaceName}Mapper;\n`;
+    content += `export default ${interfaceName}Model;\n`;
 
     if (printOnly) {
       /** Print content to console only and apply syntax highlighting */
